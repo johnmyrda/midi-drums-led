@@ -11,7 +11,7 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 
 #define LED_PIN 4
 #define LEDS_PER_DRUM 24
-#define NUMBER_OF_DRUMS 6
+#define NUMBER_OF_DRUMS 1
 #define NUM_LEDS NUMBER_OF_DRUMS * LEDS_PER_DRUM
 #define CHIPSET     WS2812B
 #define COLOR_ORDER GRB
@@ -20,16 +20,18 @@ CRGB leds[NUM_LEDS];
 
 AnimationController ac = AnimationController();
 
-
+#define PRINTS(s)   { mySerial.print(F(s)); }
+#define PRINTSLN(s) { mySerial.println(F(s)); }
+#define PRINT(v)  { mySerial.print(v); }
 
 void handleNoteOn(byte channel, byte pitch, byte velocity)
 {
-//    mySerial.print("C: ");
-//    mySerial.print(channel);
-//    mySerial.print(", P: ");
-//    mySerial.print(pitch);
-//    mySerial.print(", V: ");
-//    mySerial.println(velocity);
+   mySerial.print(F("C: "));
+   mySerial.print(channel);
+   mySerial.print(F(", P: "));
+   mySerial.print(pitch);
+   mySerial.print(F(", V: "));
+   mySerial.println(velocity);
     switch(pitch){
         case(38)://snare
             ac.fire_animation(0);
@@ -53,6 +55,24 @@ void handleNoteOn(byte channel, byte pitch, byte velocity)
 
 }
 
+void printStats(unsigned long start, unsigned long first, unsigned long second, unsigned long last){
+    PRINTS("MIDI.read() took ");
+    PRINT(first - start);
+    PRINTSLN("ms");
+    PRINTS("ac.show() took ");
+    if(second == 0){
+        PRINT(last - first);
+        PRINTSLN("ms");
+    } else {
+        PRINT(second - first);
+        PRINTSLN("ms");
+        PRINTS("FastLED.show() took ");
+        PRINT(last - second);
+        PRINTSLN("ms");
+    }
+
+}
+
 
 void setup() {
     // Connect the handleNoteOn function to the library,
@@ -63,7 +83,7 @@ void setup() {
     MIDI.begin(10);
     
     mySerial.begin(9600);
-    mySerial.println("Hello, world?");
+    mySerial.println(F("Hello, world?"));
 
 
     FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
@@ -87,7 +107,12 @@ void setup() {
 
 void loop() {
     // Call MIDI.read the fastest you can for real-time performance.
+    //unsigned long start = millis();
     MIDI.read();
+    //unsigned long first = millis();
     ac.show();
+    // unsigned long second = millis();
     FastLED.show();
+    // unsigned long last = millis();
+    // printStats(start, first, second, last);
 }
